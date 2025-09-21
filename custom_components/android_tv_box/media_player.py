@@ -76,14 +76,11 @@ class AndroidTVBoxMediaPlayer(CoordinatorEntity[AndroidTVBoxUpdateCoordinator], 
 
     @property
     def state(self) -> Optional[str]:
-        # Prefer actual screen flag; fall back to power_state; finally ADB connection
+        # Report strictly ON/OFF for clear UX
         if self.coordinator.data.screen_on:
             return MediaPlayerState.ON
         if getattr(self.coordinator.data, "power_state", "unknown") == "on":
             return MediaPlayerState.ON
-        if self.coordinator.data.is_connected:
-            # Keep controls usable while we refine detection on some firmwares
-            return MediaPlayerState.IDLE
         return MediaPlayerState.OFF
 
     @property
@@ -107,10 +104,22 @@ class AndroidTVBoxMediaPlayer(CoordinatorEntity[AndroidTVBoxUpdateCoordinator], 
         await self.coordinator.async_request_refresh()
 
     async def async_turn_on(self) -> None:
-        await self.coordinator.async_set_power_state(True)
+        # Immediate power change with instant status query to avoid double clicks
+        ok = await self.coordinator.adb_manager.set_power_state(True)
+        if ok:
+            # Re-read power immediately and update local state
+            ps, so = await self.coordinator.adb_manager.get_power_state()
+            self.coordinator.data.update_power_state(ps, so)
+            self.async_write_ha_state()
+        await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self) -> None:
-        await self.coordinator.async_set_power_state(False)
+        ok = await self.coordinator.adb_manager.set_power_state(False)
+        if ok:
+            ps, so = await self.coordinator.adb_manager.get_power_state()
+            self.coordinator.data.update_power_state(ps, so)
+            self.async_write_ha_state()
+        await self.coordinator.async_request_refresh()
 
     @property
     def source_list(self) -> list[str] | None:
