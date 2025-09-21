@@ -13,7 +13,13 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN, SCREENSHOT_DIR, SCREENSHOT_RETAIN
+from .const import (
+    DOMAIN,
+    SCREENSHOT_DIR,
+    SCREENSHOT_RETAIN,
+    OPT_SCREENSHOT_DIR,
+    OPT_SCREENSHOT_RETAIN,
+)
 from .coordinator import AndroidTVBoxUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -44,9 +50,10 @@ class AndroidTVBoxCamera(CoordinatorEntity[AndroidTVBoxUpdateCoordinator], Camer
         port = config_entry.data[CONF_PORT]
         self._attr_unique_id = f"{host}:{port}_camera"
 
-        # ensure local screenshot dir exists
+        # ensure local screenshot dir exists (from options or default)
         try:
-            os.makedirs(SCREENSHOT_DIR, exist_ok=True)
+            opt_dir = self._config_entry.options.get(OPT_SCREENSHOT_DIR, SCREENSHOT_DIR)
+            os.makedirs(opt_dir, exist_ok=True)
         except Exception as e:
             _LOGGER.debug("Failed to ensure screenshot dir: %s", e)
 
@@ -65,7 +72,9 @@ class AndroidTVBoxCamera(CoordinatorEntity[AndroidTVBoxUpdateCoordinator], Camer
                 return None
 
             ts = int(asyncio.get_event_loop().time() * 1000)
-            local_path = os.path.join(SCREENSHOT_DIR, f"android_tv_box_{ts}.png")
+            target_dir = self._config_entry.options.get(OPT_SCREENSHOT_DIR, SCREENSHOT_DIR)
+            retain = self._config_entry.options.get(OPT_SCREENSHOT_RETAIN, SCREENSHOT_RETAIN)
+            local_path = os.path.join(target_dir, f"android_tv_box_{ts}.png")
             ok = await self.coordinator.adb_manager.pull_file(device_path, local_path)
             if not ok:
                 return None
@@ -80,8 +89,8 @@ class AndroidTVBoxCamera(CoordinatorEntity[AndroidTVBoxUpdateCoordinator], Camer
                     ]
                 files = await asyncio.to_thread(_list_pngs)
                 files.sort(key=os.path.getmtime)
-                if len(files) > SCREENSHOT_RETAIN:
-                    for f in files[:-SCREENSHOT_RETAIN]:
+                if len(files) > retain:
+                    for f in files[:-retain]:
                         try:
                             await asyncio.to_thread(os.remove, f)
                         except Exception:

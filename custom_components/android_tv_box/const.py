@@ -112,3 +112,7 @@ UPDATE_INTERVALS: Final = {
 # Camera / Screenshot settings
 SCREENSHOT_DIR: Final = "/home/bo/.homeassistant/www/screenshots"
 SCREENSHOT_RETAIN: Final = 10  # keep last N screenshots locally
+
+# Options keys for config entry
+OPT_SCREENSHOT_DIR: Final = "screenshot_dir"
+OPT_SCREENSHOT_RETAIN: Final = "screenshot_retain"

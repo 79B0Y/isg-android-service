@@ -27,6 +27,14 @@
   - Requires env: `HA_TOKEN` (long-lived token), optional `HA_BASE_URL` (default `http://localhost:8123`).
   - By default, excludes the power switch; pass `--include-power` to include it.
 
+## Camera & Screenshots
+- Entity: `camera.android_tv_box_screen` (captures current screen via ADB)
+- Fetch image: `GET /api/camera_proxy/camera.android_tv_box_screen` (requires `HA_TOKEN`)
+- Screenshot storage: default `~/.homeassistant/www/screenshots` (served under `/local/screenshots/`)
+- Options (Settings → Devices & Services → Integration → Options):
+  - `screenshot_dir`: override target folder
+  - `screenshot_retain`: keep last N images (default 10)
+
 ## Coding Style & Naming Conventions
 - Python 3.11+, follow PEP8 (4‑space indents, 100‑120 col soft limit).
 - Names: modules `snake_case.py`, classes `CamelCase`, functions/vars `snake_case`, constants `UPPER_SNAKE`.

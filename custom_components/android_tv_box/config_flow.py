@@ -19,6 +19,10 @@ from .const import (
     DEFAULT_NAME,
     DEFAULT_PORT,
     DOMAIN,
+    OPT_SCREENSHOT_DIR,
+    OPT_SCREENSHOT_RETAIN,
+    SCREENSHOT_DIR,
+    SCREENSHOT_RETAIN,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -186,6 +190,20 @@ class AndroidTVBoxOptionsFlow(config_entries.OptionsFlow):
                             self.config_entry.data.get(CONF_DEVICE_NAME, DEFAULT_NAME)
                         ),
                     ): cv.string,
+                    vol.Optional(
+                        OPT_SCREENSHOT_DIR,
+                        default=self.config_entry.options.get(
+                            OPT_SCREENSHOT_DIR,
+                            SCREENSHOT_DIR,
+                        ),
+                    ): cv.string,
+                    vol.Optional(
+                        OPT_SCREENSHOT_RETAIN,
+                        default=self.config_entry.options.get(
+                            OPT_SCREENSHOT_RETAIN,
+                            SCREENSHOT_RETAIN,
+                        ),
+                    ): vol.All(int, vol.Range(min=1, max=200)),
                 }
             ),
         )
