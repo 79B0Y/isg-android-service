@@ -95,7 +95,7 @@ class AndroidTVBoxADBConnectionSwitch(AndroidTVBoxSwitchEntity):
         )
         
         self._attr_icon = "mdi:usb-port"
-        self._attr_entity_category = "diagnostic"
+        self._attr_entity_category = EntityCategory.DIAGNOSTIC
 
     @property
     def is_on(self) -> bool:
