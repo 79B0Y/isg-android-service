@@ -8,7 +8,7 @@ from typing import Any, Dict, Optional
 import voluptuous as vol
 
 from homeassistant import config_entries
-from homeassistant.const import CONF_HOST, CONF_NAME, CONF_PORT
+from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResult
 import homeassistant.helpers.config_validation as cv
@@ -103,6 +103,7 @@ class AndroidTVBoxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Android TV Box."""
 
     VERSION = 1
+    CONNECTION_CLASS = config_entries.CONN_CLASS_LOCAL_POLL
 
     async def async_step_user(
         self, user_input: Optional[Dict[str, Any]] = None
@@ -131,6 +132,9 @@ class AndroidTVBoxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 errors["base"] = "adb_not_enabled"
             else:
                 errors["base"] = "cannot_connect"
+        except ImportError as e:
+            _LOGGER.error("Import error during setup: %s", e)
+            errors["base"] = "missing_dependency"
         except Exception as e:  # pylint: disable=broad-except
             _LOGGER.exception("Unexpected exception during setup: %s", e)
             errors["base"] = "unknown"
@@ -149,6 +153,13 @@ class AndroidTVBoxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_import(self, user_input: Dict[str, Any]) -> FlowResult:
         """Handle import from configuration.yaml."""
         return await self.async_step_user(user_input)
+
+    @staticmethod
+    def async_get_options_flow(
+        config_entry: config_entries.ConfigEntry,
+    ) -> AndroidTVBoxOptionsFlow:
+        """Create the options flow."""
+        return AndroidTVBoxOptionsFlow(config_entry)
 
 
 class AndroidTVBoxOptionsFlow(config_entries.OptionsFlow):

@@ -5,8 +5,14 @@ import asyncio
 import logging
 from typing import Any, Dict, Optional, Tuple
 
-from adb_shell.adb_device import AdbDeviceTcp
-from adb_shell.exceptions import TcpTimeoutException
+try:
+    from adb_shell.adb_device import AdbDeviceTcp
+    from adb_shell.exceptions import TcpTimeoutException
+except ImportError as e:
+    raise ImportError(
+        f"Required ADB library not found: {e}. "
+        "Please install with: pip install adb-shell>=0.4.4"
+    ) from e
 
 from .const import ADB_COMMANDS, ADB_CONTROL_COMMANDS, DEFAULT_TIMEOUT
 

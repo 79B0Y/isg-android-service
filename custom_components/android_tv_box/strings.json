@@ -15,6 +15,7 @@
       "cannot_connect": "Failed to connect to device. Make sure ADB debugging is enabled and the device is reachable.",
       "timeout": "Connection timeout after 30 seconds. Device may be unreachable or ADB service not running.",
       "adb_not_enabled": "ADB debugging appears to be disabled. Enable Developer Options and ADB debugging on your Android TV Box.",
+      "missing_dependency": "Required ADB library is missing. Please install dependencies and restart Home Assistant.",
       "unknown": "Unexpected error occurred during setup. Check Home Assistant logs for details."
     },
     "abort": {
