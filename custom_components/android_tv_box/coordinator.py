@@ -50,6 +50,13 @@ class AndroidTVBoxData:
         self.wifi_ssid: Optional[str] = None
         self.ip_address: Optional[str] = None
         
+        # Media / volume state
+        self.volume_level: int = 0
+        self.volume_max: int = 15
+        self.volume_percentage: float = 0.0
+        self.muted: bool = False
+        self.current_app_package: Optional[str] = None
+        
         # Error tracking
         self.last_error: Optional[str] = None
         self.error_count: int = 0
@@ -199,6 +206,16 @@ class AndroidTVBoxUpdateCoordinator(DataUpdateCoordinator[AndroidTVBoxData]):
                 except Exception as e:
                     _LOGGER.warning("Failed to get WiFi state: %s", e)
 
+                # Update volume state
+                try:
+                    vol, vmax, muted = await self.adb_manager.get_volume_state()
+                    self.data.volume_level = vol
+                    self.data.volume_max = vmax
+                    self.data.muted = muted
+                    self.data.volume_percentage = (vol / vmax * 100.0) if vmax else 0.0
+                except Exception as e:
+                    _LOGGER.debug("Failed to get volume state: %s", e)
+
                 # Update device info periodically
                 now = datetime.now()
                 if (
@@ -286,4 +303,4 @@ class AndroidTVBoxUpdateCoordinator(DataUpdateCoordinator[AndroidTVBoxData]):
             "model": self.data.device_model or "TV Box",
             "sw_version": self.data.android_version,
             "configuration_url": f"http://{self.host}:{self.port}",
-        }
+        } 

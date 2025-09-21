@@ -204,6 +204,10 @@ class AndroidTVBoxOptionsFlow(config_entries.OptionsFlow):
                             SCREENSHOT_RETAIN,
                         ),
                     ): vol.All(int, vol.Range(min=1, max=200)),
+                    vol.Optional(
+                        OPT_APPS,
+                        default=self.config_entry.options.get(OPT_APPS, "{\"ISG\": \"com.linknlink.app.device.isg\"}"),
+                    ): cv.string,
                 }
             ),
         )

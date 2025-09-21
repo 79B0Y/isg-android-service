@@ -296,6 +296,55 @@ class ADBManager:
             
         return device_info
 
+    # ===== Media / Volume helpers =====
+
+    async def get_volume_state(self) -> Tuple[int, int, bool]:
+        """Get (current_volume, max_volume, muted) for media stream 3.
+
+        Uses: cmd media_session volume --stream 3 --get
+        Example output: "volume is 8 in range [0..15]"
+        """
+        try:
+            stdout, _ = await self._execute_command("cmd media_session volume --stream 3 --get")
+            import re
+            m = re.search(r"volume is\s+(\d+)\s+in range\s+\[0\.\.(\d+)\]", stdout or "")
+            if m:
+                current = int(m.group(1))
+                max_vol = int(m.group(2))
+                return current, max_vol, current == 0
+        except Exception as e:
+            _LOGGER.warning("get_volume_state failed: %s", e)
+        return 0, 15, False
+
+    async def set_volume(self, level: int) -> bool:
+        """Set media volume level (0..max). Uses service call audio."""
+        try:
+            await self._execute_command(f"service call audio 12 i32 3 i32 {level} i32 0")
+            await asyncio.sleep(0.3)
+            return True
+        except Exception as e:
+            _LOGGER.warning("set_volume failed: %s", e)
+            return False
+
+    async def start_app(self, package: str) -> bool:
+        """Start an app by package. Tries monkey then am start."""
+        if not package:
+            return False
+        try:
+            await self._execute_command(
+                f"monkey -p {package} -c android.intent.category.LAUNCHER 1"
+            )
+            await asyncio.sleep(0.5)
+            return True
+        except Exception:
+            try:
+                await self._execute_command(f"am start -n {package}")
+                await asyncio.sleep(0.5)
+                return True
+            except Exception as e:
+                _LOGGER.warning("start_app failed for %s: %s", package, e)
+                return False
+
     # ===== High-level helpers for buttons =====
 
     async def send_key(self, keycode: int) -> bool:

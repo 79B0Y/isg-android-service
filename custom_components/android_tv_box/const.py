@@ -116,3 +116,6 @@ SCREENSHOT_RETAIN: Final = 10  # keep last N screenshots locally
 # Options keys for config entry
 OPT_SCREENSHOT_DIR: Final = "screenshot_dir"
 OPT_SCREENSHOT_RETAIN: Final = "screenshot_retain"
+
+# Options for media player apps mapping (JSON string of {label: package})
+OPT_APPS: Final = "apps"
