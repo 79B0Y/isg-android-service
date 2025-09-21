@@ -190,20 +190,35 @@ class ADBManager:
             return "unknown", False
 
     async def set_power_state(self, power_on: bool) -> bool:
-        """Set device power state."""
+        """Ensure screen power state matches desired value (robust)."""
         try:
-            command = ADB_CONTROL_COMMANDS["power_on" if power_on else "power_off"]
-            await self._execute_command(command)
-            
-            # Wait a moment for the command to take effect
-            await asyncio.sleep(1.0)
-            
-            # Verify the state change
+            current, _screen = await self.get_power_state()
+            target = "on" if power_on else "off"
+            if current == target:
+                return True
+
+            # First attempt
+            primary = ADB_CONTROL_COMMANDS["power_on" if power_on else "power_off"]
+            await self._execute_command(primary)
+            await asyncio.sleep(0.8)
             new_state, _ = await self.get_power_state()
-            expected_state = "on" if power_on else "off"
-            
-            return new_state == expected_state
-            
+            if new_state == target:
+                return True
+
+            # Fallback: toggle power key
+            await self._execute_command("input keyevent 26")
+            await asyncio.sleep(0.8)
+            new_state, _ = await self.get_power_state()
+            if new_state == target:
+                return True
+
+            # Final retry once more
+            await asyncio.sleep(0.6)
+            await self._execute_command("input keyevent 26")
+            await asyncio.sleep(0.8)
+            new_state, _ = await self.get_power_state()
+            return new_state == target
+
         except Exception as e:
             _LOGGER.error("Failed to set power state to %s: %s", power_on, e)
             return False
