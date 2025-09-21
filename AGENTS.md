@@ -20,6 +20,13 @@
 - Debug ADB: `python3 debug_adb_connection.py <host> [port]`
 - Install into HA: copy `custom_components/android_tv_box` into your HA `custom_components/` and restart (see `README_INSTALLATION.md`).
 
+## Verification & Toggle Tests
+- Auto-verify entities: `python3 auto_run_and_verify.py` (starts hass, confirms config entry + entities)
+- Smoke log monitor: `python3 restart_and_test.py` (60s watch for errors)
+- Toggle entities via REST: `python3 toggle_entities_test.py [--entities e1 e2 ...] [--include-power]`
+  - Requires env: `HA_TOKEN` (long-lived token), optional `HA_BASE_URL` (default `http://localhost:8123`).
+  - By default, excludes the power switch; pass `--include-power` to include it.
+
 ## Coding Style & Naming Conventions
 - Python 3.11+, follow PEP8 (4‑space indents, 100‑120 col soft limit).
 - Names: modules `snake_case.py`, classes `CamelCase`, functions/vars `snake_case`, constants `UPPER_SNAKE`.
