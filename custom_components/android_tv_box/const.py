@@ -21,40 +21,40 @@ DEFAULT_TIMEOUT: Final = 15
 # Debug and diagnostics
 DEBUG_COMMANDS: Final = {
     "test_echo": "echo 'hello_world'",
-    "check_adb_version": "shell getprop ro.adb.secure",
-    "list_properties": "shell getprop | head -10",
-    "check_network": "shell ping -c 1 8.8.8.8",
-    "check_services": "shell service list | head -5",
+    "check_adb_version": "getprop ro.adb.secure",
+    "list_properties": "getprop | head -10",
+    "check_network": "ping -c 1 8.8.8.8",
+    "check_services": "service list | head -5",
 }
 
 # ADB Commands for device state queries
 ADB_COMMANDS: Final = {
     # Connection status
-    "check_connection": "shell echo 'connected'",
+    "check_connection": "echo 'connected'",
     
     # Power state commands
-    "power_state": "shell dumpsys power | grep -E '(mWakefulness|mScreenOn)'",
+    "power_state": "dumpsys power | grep -E '(mWakefulness|mScreenOn)'",
     
     # Network status
-    "wifi_state": "shell settings get global wifi_on",
-    "wifi_ssid": "shell dumpsys wifi | grep 'SSID:' | head -1",
-    "ip_address": "shell ip addr show wlan0 | grep 'inet '",
+    "wifi_state": "settings get global wifi_on",
+    "wifi_ssid": "dumpsys wifi | grep 'SSID:' | head -1",
+    "ip_address": "ip addr show wlan0 | grep 'inet '",
     
     # Device info
-    "device_model": "shell getprop ro.product.model",
-    "android_version": "shell getprop ro.build.version.release",
-    "device_brand": "shell getprop ro.product.brand",
+    "device_model": "getprop ro.product.model",
+    "android_version": "getprop ro.build.version.release",
+    "device_brand": "getprop ro.product.brand",
 }
 
 # ADB Control Commands
 ADB_CONTROL_COMMANDS: Final = {
     # Power control
-    "power_on": "shell input keyevent 224",  # KEYCODE_WAKEUP
-    "power_off": "shell input keyevent 26",  # KEYCODE_POWER
+    "power_on": "input keyevent 224",  # KEYCODE_WAKEUP
+    "power_off": "input keyevent 26",  # KEYCODE_POWER
     
     # WiFi control (requires root or system permissions)
-    "wifi_enable": "shell svc wifi enable",
-    "wifi_disable": "shell svc wifi disable",
+    "wifi_enable": "svc wifi enable",
+    "wifi_disable": "svc wifi disable",
 }
 
 # Entity unique ID suffixes

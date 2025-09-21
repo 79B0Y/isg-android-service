@@ -45,20 +45,21 @@ class ADBManager:
                     pass
             
             # Create new ADB TCP device
-            self._device = AdbDeviceTcp(self.host, self.port, default_timeout_s=self.timeout)
+            self._device = AdbDeviceTcp(self.host, self.port, default_transport_timeout_s=self.timeout)
             
             # Establish the TCP connection first
             _LOGGER.debug("Establishing TCP connection...")
-            await asyncio.wait_for(self._device.connect(), timeout=self.timeout)
+            await asyncio.get_event_loop().run_in_executor(
+                None, self._device.connect, None, self.timeout
+            )
             
             # Test with a simple echo command
             _LOGGER.debug("Testing connection with echo command...")
-            result = await asyncio.wait_for(
-                self._device.shell("echo 'connection_test'"),
-                timeout=10  # Shorter timeout for test
+            result = await asyncio.get_event_loop().run_in_executor(
+                None, self._device.shell, "echo 'connection_test'"
             )
             
-            if result and "connection_test" in result.decode('utf-8'):
+            if result and "connection_test" in result:
                 self._connected = True
                 _LOGGER.info("Successfully connected to Android TV Box at %s:%s", self.host, self.port)
                 return True
@@ -84,7 +85,9 @@ class ADBManager:
         """Disconnect from the Android device."""
         if self._device:
             try:
-                await self._device.close()
+                await asyncio.get_event_loop().run_in_executor(
+                    None, self._device.close
+                )
                 _LOGGER.info("Disconnected from Android TV Box")
             except Exception as e:
                 _LOGGER.error("Error disconnecting: %s", e)
@@ -104,13 +107,12 @@ class ADBManager:
 
         try:
             _LOGGER.debug("Executing ADB command: %s", command)
-            result = await asyncio.wait_for(
-                self._device.shell(command),
-                timeout=self.timeout
+            result = await asyncio.get_event_loop().run_in_executor(
+                None, self._device.shell, command
             )
             
-            # ADB shell returns bytes, convert to string
-            stdout = result.decode('utf-8').strip() if result else ""
+            # ADB shell returns string directly
+            stdout = result.strip() if result else ""
             stderr = ""
             
             _LOGGER.debug("Command result: %s", stdout[:200])  # Log first 200 chars
@@ -131,12 +133,11 @@ class ADBManager:
             
         try:
             # Use a simple echo test instead of checking for "connected"
-            result = await asyncio.wait_for(
-                self._device.shell("echo 'connection_check'"),
-                timeout=5
+            result = await asyncio.get_event_loop().run_in_executor(
+                None, self._device.shell, "echo 'connection_check'"
             )
             
-            if result and "connection_check" in result.decode('utf-8'):
+            if result and "connection_check" in result:
                 self._connected = True
                 _LOGGER.debug("Connection check successful")
                 return True
