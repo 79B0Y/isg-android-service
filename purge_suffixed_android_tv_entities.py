@@ -18,7 +18,7 @@ import time
 HA_CONFIG_DIR = "/home/bo/.homeassistant"
 REG_PATH = os.path.join(HA_CONFIG_DIR, ".storage", "core.entity_registry")
 
-SUFFIX_RE = re.compile(r"^(?P<prefix>(switch|button)\.android_tv_box_[a-z0-9_]+?)(?:_(?P<num>\d+))$")
+SUFFIX_RE = re.compile(r"^(?P<prefix>(switch|button|media_player)\.android_tv_box_[a-z0-9_]+?)(?:_(?P<num>\d+))$")
 
 
 def stop_ha():
@@ -87,4 +87,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
