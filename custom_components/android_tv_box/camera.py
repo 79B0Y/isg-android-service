@@ -72,23 +72,28 @@ class AndroidTVBoxCamera(CoordinatorEntity[AndroidTVBoxUpdateCoordinator], Camer
 
             # retention cleanup
             try:
-                files = sorted(
-                    (os.path.join(SCREENSHOT_DIR, f) for f in os.listdir(SCREENSHOT_DIR) if f.endswith(".png")),
-                    key=os.path.getmtime,
-                )
+                def _list_pngs() -> list[str]:
+                    return [
+                        os.path.join(SCREENSHOT_DIR, f)
+                        for f in os.listdir(SCREENSHOT_DIR)
+                        if f.endswith(".png")
+                    ]
+                files = await asyncio.to_thread(_list_pngs)
+                files.sort(key=os.path.getmtime)
                 if len(files) > SCREENSHOT_RETAIN:
                     for f in files[:-SCREENSHOT_RETAIN]:
                         try:
-                            os.remove(f)
+                            await asyncio.to_thread(os.remove, f)
                         except Exception:
                             pass
             except Exception as e:
                 _LOGGER.debug("Retention cleanup failed: %s", e)
 
             # read bytes
-            with open(local_path, "rb") as f:
-                return f.read()
+            def _read_bytes(p: str) -> bytes:
+                with open(p, "rb") as f:
+                    return f.read()
+            return await asyncio.to_thread(_read_bytes, local_path)
         except Exception as e:
             _LOGGER.warning("Failed to capture camera image: %s", e)
             return None
-
