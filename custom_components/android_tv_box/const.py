@@ -18,6 +18,15 @@ DEFAULT_NAME: Final = "Android TV Box"
 DEFAULT_SCAN_INTERVAL: Final = timedelta(seconds=60)
 DEFAULT_TIMEOUT: Final = 15
 
+# Debug and diagnostics
+DEBUG_COMMANDS: Final = {
+    "test_echo": "echo 'hello_world'",
+    "check_adb_version": "shell getprop ro.adb.secure",
+    "list_properties": "shell getprop | head -10",
+    "check_network": "shell ping -c 1 8.8.8.8",
+    "check_services": "shell service list | head -5",
+}
+
 # ADB Commands for device state queries
 ADB_COMMANDS: Final = {
     # Connection status

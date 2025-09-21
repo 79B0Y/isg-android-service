@@ -29,19 +29,48 @@ class ADBManager:
     async def connect(self) -> bool:
         """Connect to the Android device via ADB."""
         try:
-            _LOGGER.debug("Attempting to connect to %s:%s", self.host, self.port)
+            _LOGGER.info("Attempting to connect to Android TV Box at %s:%s", self.host, self.port)
             
-            if self._device is None:
-                self._device = AdbDeviceTcp(self.host, self.port, default_timeout_s=self.timeout)
+            # Clean up any existing connection
+            if self._device:
+                try:
+                    await self._device.close()
+                except Exception:
+                    pass
             
-            # Test connection with a simple command
-            await self._execute_command("shell echo 'test'")
-            self._connected = True
-            _LOGGER.info("Successfully connected to Android TV Box at %s:%s", self.host, self.port)
-            return True
+            # Create new ADB TCP device
+            self._device = AdbDeviceTcp(self.host, self.port, default_timeout_s=self.timeout)
             
+            # Establish the TCP connection first
+            _LOGGER.debug("Establishing TCP connection...")
+            await asyncio.wait_for(self._device.connect(), timeout=self.timeout)
+            
+            # Test with a simple echo command
+            _LOGGER.debug("Testing connection with echo command...")
+            result = await asyncio.wait_for(
+                self._device.shell("echo 'connection_test'"),
+                timeout=10  # Shorter timeout for test
+            )
+            
+            if result and "connection_test" in result.decode('utf-8'):
+                self._connected = True
+                _LOGGER.info("Successfully connected to Android TV Box at %s:%s", self.host, self.port)
+                return True
+            else:
+                _LOGGER.error("Connection test failed - no response from device")
+                self._connected = False
+                return False
+            
+        except asyncio.TimeoutError:
+            _LOGGER.error("Connection timeout to %s:%s after %s seconds", self.host, self.port, self.timeout)
+            self._connected = False
+            return False
+        except ConnectionRefusedError:
+            _LOGGER.error("Connection refused by %s:%s - check if ADB is enabled", self.host, self.port)
+            self._connected = False
+            return False
         except Exception as e:
-            _LOGGER.error("Failed to connect to %s:%s: %s", self.host, self.port, e)
+            _LOGGER.error("Failed to connect to %s:%s: %s (Type: %s)", self.host, self.port, str(e), type(e).__name__)
             self._connected = False
             return False
 
@@ -91,14 +120,31 @@ class ADBManager:
     async def check_connection(self) -> bool:
         """Check if ADB connection is active."""
         if not self._device:
+            _LOGGER.debug("No ADB device instance available")
             return False
             
         try:
-            stdout, _ = await self._execute_command(ADB_COMMANDS["check_connection"])
-            connected = "connected" in stdout.lower()
-            self._connected = connected
-            return connected
-        except Exception:
+            # Use a simple echo test instead of checking for "connected"
+            result = await asyncio.wait_for(
+                self._device.shell("echo 'connection_check'"),
+                timeout=5
+            )
+            
+            if result and "connection_check" in result.decode('utf-8'):
+                self._connected = True
+                _LOGGER.debug("Connection check successful")
+                return True
+            else:
+                _LOGGER.debug("Connection check failed - no response")
+                self._connected = False
+                return False
+                
+        except asyncio.TimeoutError:
+            _LOGGER.debug("Connection check timeout")
+            self._connected = False
+            return False
+        except Exception as e:
+            _LOGGER.debug("Connection check failed: %s", e)
             self._connected = False
             return False
 
@@ -250,26 +296,81 @@ class ADBManager:
             "device_info": {},
             "power_state": "unknown",
             "wifi_enabled": False,
+            "connection_details": {},
         }
         
         try:
-            # Test basic connection
-            result["connected"] = await self.check_connection()
+            _LOGGER.info("Starting ADB connection test for %s:%s", self.host, self.port)
             
-            if result["connected"]:
-                # Get device info
-                result["device_info"] = await self.get_device_info()
+            # Test basic connection with detailed error reporting
+            connection_start_time = asyncio.get_event_loop().time()
+            
+            # First try to connect
+            connected = await self.connect()
+            connection_time = asyncio.get_event_loop().time() - connection_start_time
+            
+            result["connection_details"]["connection_time"] = round(connection_time, 2)
+            result["connected"] = connected
+            
+            if connected:
+                _LOGGER.info("Basic connection successful in %.2f seconds", connection_time)
                 
-                # Get power state
-                power_state, _ = await self.get_power_state()
-                result["power_state"] = power_state
+                # Test basic command execution
+                try:
+                    _LOGGER.debug("Testing basic shell command...")
+                    test_result = await self._execute_command("echo 'test_command'")
+                    result["connection_details"]["shell_test"] = "success" if test_result[0] else "failed"
+                except Exception as shell_error:
+                    _LOGGER.warning("Shell command test failed: %s", shell_error)
+                    result["connection_details"]["shell_test"] = f"failed: {shell_error}"
                 
-                # Get WiFi state
-                wifi_info = await self.get_wifi_state()
-                result["wifi_enabled"] = wifi_info["enabled"]
+                # Get device info with timeout
+                try:
+                    _LOGGER.debug("Getting device information...")
+                    result["device_info"] = await asyncio.wait_for(
+                        self.get_device_info(), 
+                        timeout=10
+                    )
+                    _LOGGER.info("Device info retrieved: %s", result["device_info"])
+                except asyncio.TimeoutError:
+                    _LOGGER.warning("Device info timeout")
+                    result["connection_details"]["device_info_error"] = "timeout"
+                except Exception as device_error:
+                    _LOGGER.warning("Device info failed: %s", device_error)
+                    result["connection_details"]["device_info_error"] = str(device_error)
+                
+                # Test power state
+                try:
+                    power_state, screen_on = await asyncio.wait_for(
+                        self.get_power_state(), 
+                        timeout=5
+                    )
+                    result["power_state"] = power_state
+                    result["connection_details"]["screen_on"] = screen_on
+                except Exception as power_error:
+                    _LOGGER.warning("Power state check failed: %s", power_error)
+                    result["connection_details"]["power_error"] = str(power_error)
+                
+                # Test WiFi state
+                try:
+                    wifi_info = await asyncio.wait_for(
+                        self.get_wifi_state(), 
+                        timeout=5
+                    )
+                    result["wifi_enabled"] = wifi_info["enabled"]
+                    result["connection_details"]["wifi_info"] = wifi_info
+                except Exception as wifi_error:
+                    _LOGGER.warning("WiFi state check failed: %s", wifi_error)
+                    result["connection_details"]["wifi_error"] = str(wifi_error)
+                    
+            else:
+                _LOGGER.error("Initial connection failed after %.2f seconds", connection_time)
+                result["error"] = "Failed to establish initial ADB connection"
                 
         except Exception as e:
-            result["error"] = str(e)
-            _LOGGER.error("ADB connection test failed: %s", e)
+            error_msg = f"Connection test failed: {str(e)} (Type: {type(e).__name__})"
+            result["error"] = error_msg
+            _LOGGER.error(error_msg)
             
+        _LOGGER.info("ADB connection test completed. Connected: %s", result["connected"])
         return result

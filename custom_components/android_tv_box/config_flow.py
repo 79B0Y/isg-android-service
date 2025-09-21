@@ -41,27 +41,37 @@ async def validate_input(hass: HomeAssistant, data: Dict[str, Any]) -> Dict[str,
     port = data[CONF_PORT]
     device_name = data[CONF_DEVICE_NAME]
 
-    adb_manager = ADBManager(host, port)
+    _LOGGER.info("Validating ADB connection to %s:%s", host, port)
     
-    # Test connection
+    # Increase timeout for initial connection
+    adb_manager = ADBManager(host, port, timeout=30)
+    
     try:
-        connected = await adb_manager.connect()
-        if not connected:
-            raise ConnectionError("Failed to establish ADB connection")
-        
-        # Get device information for validation
+        # Perform comprehensive connection test
         connection_test = await adb_manager.test_adb_connection()
         
+        _LOGGER.info("Connection test result: %s", connection_test)
+        
         if not connection_test["connected"]:
-            error_msg = connection_test.get("error", "Unknown connection error")
-            raise ConnectionError(f"ADB connection test failed: {error_msg}")
+            error_details = connection_test.get("error", "Unknown connection error")
+            connection_details = connection_test.get("connection_details", {})
+            
+            # Provide specific error messages based on the failure type
+            if "timeout" in error_details.lower():
+                raise ConnectionError(f"Connection timeout after 30 seconds. Device may be unreachable or ADB not enabled. Details: {error_details}")
+            elif "refused" in error_details.lower():
+                raise ConnectionError(f"Connection refused by device. Check if ADB debugging is enabled and port {port} is accessible. Details: {error_details}")
+            elif "network" in error_details.lower():
+                raise ConnectionError(f"Network error. Check if device IP {host} is correct and reachable. Details: {error_details}")
+            else:
+                raise ConnectionError(f"ADB connection failed: {error_details}. Connection details: {connection_details}")
         
         # Get device info to create a unique identifier
         device_info = connection_test.get("device_info", {})
         device_model = device_info.get("model", "Unknown")
         android_version = device_info.get("android_version", "Unknown")
         
-        await adb_manager.disconnect()
+        _LOGGER.info("Successfully validated ADB connection. Device: %s (Android %s)", device_model, android_version)
         
         return {
             "title": device_name,
@@ -72,13 +82,21 @@ async def validate_input(hass: HomeAssistant, data: Dict[str, Any]) -> Dict[str,
             "android_version": android_version,
         }
         
+    except ConnectionError:
+        # Re-raise connection errors with original message
+        raise
     except asyncio.TimeoutError:
-        raise ConnectionError("Connection timeout - device may be unreachable")
+        raise ConnectionError("Connection timeout after 30 seconds - device may be unreachable or ADB service not running")
     except Exception as e:
-        _LOGGER.error("Validation error: %s", e)
-        raise ConnectionError(f"Failed to connect: {str(e)}")
+        error_msg = f"Unexpected error during validation: {str(e)} (Type: {type(e).__name__})"
+        _LOGGER.error(error_msg)
+        raise ConnectionError(error_msg)
     finally:
-        await adb_manager.disconnect()
+        # Always cleanup
+        try:
+            await adb_manager.disconnect()
+        except Exception as cleanup_error:
+            _LOGGER.warning("Error during cleanup: %s", cleanup_error)
 
 
 class AndroidTVBoxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -100,15 +118,21 @@ class AndroidTVBoxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         try:
             info = await validate_input(self.hass, user_input)
         except ConnectionError as e:
-            _LOGGER.error("Connection error: %s", e)
-            if "timeout" in str(e).lower():
+            error_str = str(e).lower()
+            _LOGGER.error("Connection error during setup: %s", e)
+            
+            if "timeout" in error_str:
                 errors["base"] = "timeout"
-            elif "unreachable" in str(e).lower():
+            elif "refused" in error_str or "unreachable" in error_str:
+                errors["base"] = "cannot_connect" 
+            elif "network" in error_str:
                 errors["base"] = "cannot_connect"
+            elif "adb" in error_str and "not enabled" in error_str:
+                errors["base"] = "adb_not_enabled"
             else:
                 errors["base"] = "cannot_connect"
-        except Exception:  # pylint: disable=broad-except
-            _LOGGER.exception("Unexpected exception")
+        except Exception as e:  # pylint: disable=broad-except
+            _LOGGER.exception("Unexpected exception during setup: %s", e)
             errors["base"] = "unknown"
         else:
             # Create unique ID based on host:port
