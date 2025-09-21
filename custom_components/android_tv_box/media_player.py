@@ -76,8 +76,15 @@ class AndroidTVBoxMediaPlayer(CoordinatorEntity[AndroidTVBoxUpdateCoordinator], 
 
     @property
     def state(self) -> Optional[str]:
-        # Reflect screen state for power toggle usability
-        return MediaPlayerState.ON if self.coordinator.data.screen_on else MediaPlayerState.OFF
+        # Prefer actual screen flag; fall back to power_state; finally ADB connection
+        if self.coordinator.data.screen_on:
+            return MediaPlayerState.ON
+        if getattr(self.coordinator.data, "power_state", "unknown") == "on":
+            return MediaPlayerState.ON
+        if self.coordinator.data.is_connected:
+            # Keep controls usable while we refine detection on some firmwares
+            return MediaPlayerState.IDLE
+        return MediaPlayerState.OFF
 
     @property
     def volume_level(self) -> Optional[float]:

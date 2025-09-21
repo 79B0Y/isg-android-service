@@ -393,6 +393,11 @@ class ADBManager:
             m = re.search(r" ([a-zA-Z0-9_\.]+)/(?:[A-Za-z0-9_\./]+)", out or "")
             if m:
                 return m.group(1)
+            # Fallback: dumpsys activity top
+            out_top, _ = await self._execute_command("dumpsys activity top | head -n 20")
+            m_top = re.search(r"ACTIVITY\s+([a-zA-Z0-9_\.]+)/", out_top or "")
+            if m_top:
+                return m_top.group(1)
             # Fallback to window focus
             out2, _ = await self._execute_command("dumpsys window windows | grep -m 1 mCurrentFocus")
             m2 = re.search(r" ([a-zA-Z0-9_\.]+)/", out2 or "")
