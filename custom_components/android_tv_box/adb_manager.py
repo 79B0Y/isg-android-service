@@ -4,6 +4,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
+import re
 from typing import Any, Dict, Optional, Tuple
 
 try:
@@ -166,11 +167,10 @@ class ADBManager:
         """
         try:
             stdout, _ = await self._execute_command(ADB_COMMANDS["power_state"])
-            
-            # Parse dumpsys power output
+
             wakefulness = "unknown"
-            screen_on = False
-            
+            screen_on = None
+
             for line in stdout.split('\n'):
                 line = line.strip()
                 if 'mWakefulness=' in line:
@@ -178,13 +178,38 @@ class ADBManager:
                         wakefulness = "on"
                     elif 'Asleep' in line:
                         wakefulness = "off"
-                    elif 'Dreaming' in line:
+                    elif 'Dreaming' in line or 'Dozing' in line:
                         wakefulness = "standby"
-                elif 'mScreenOn=' in line:
+                # Legacy field
+                if 'mScreenOn=' in line:
                     screen_on = 'true' in line.lower()
-            
-            return wakefulness, screen_on
-            
+                # Newer formats: Display Power: state=ON/OFF
+                m = re.search(r"state=([A-Z]+)", line)
+                if m and 'Display' in line:
+                    state = m.group(1)
+                    if state == 'ON':
+                        screen_on = True
+                        if wakefulness == 'unknown':
+                            wakefulness = 'on'
+                    elif state in ('OFF', 'DOZE'):
+                        screen_on = False
+                        if wakefulness == 'unknown':
+                            wakefulness = 'off'
+
+            # Fallback to dumpsys display if screen_on is still unknown
+            if screen_on is None:
+                disp, _ = await self._execute_command("dumpsys display | grep -i 'mScreenState\|state=' | head -n 5")
+                if re.search(r"(mScreenState=ON|state=ON|Display 0 state=ON)", disp or '', re.I):
+                    screen_on = True
+                    if wakefulness == 'unknown':
+                        wakefulness = 'on'
+                elif re.search(r"(mScreenState=OFF|state=OFF|Display 0 state=OFF)", disp or '', re.I):
+                    screen_on = False
+                    if wakefulness == 'unknown':
+                        wakefulness = 'off'
+
+            return wakefulness, bool(screen_on) if screen_on is not None else False
+        
         except Exception as e:
             _LOGGER.error("Failed to get power state: %s", e)
             return "unknown", False
@@ -359,6 +384,23 @@ class ADBManager:
             except Exception as e:
                 _LOGGER.warning("start_app failed for %s: %s", package, e)
                 return False
+
+    async def get_current_app(self) -> Optional[str]:
+        """Return current foreground app package if detectable."""
+        try:
+            # Try activity stack first (Android 10+ may use 'topResumedActivity')
+            out, _ = await self._execute_command("dumpsys activity activities | grep -m 1 -E 'mResumedActivity|topResumedActivity'")
+            m = re.search(r" ([a-zA-Z0-9_\.]+)/(?:[A-Za-z0-9_\./]+)", out or "")
+            if m:
+                return m.group(1)
+            # Fallback to window focus
+            out2, _ = await self._execute_command("dumpsys window windows | grep -m 1 mCurrentFocus")
+            m2 = re.search(r" ([a-zA-Z0-9_\.]+)/", out2 or "")
+            if m2:
+                return m2.group(1)
+        except Exception as e:
+            _LOGGER.debug("get_current_app failed: %s", e)
+        return None
 
     # ===== High-level helpers for buttons =====
 

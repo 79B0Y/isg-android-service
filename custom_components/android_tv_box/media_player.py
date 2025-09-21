@@ -76,10 +76,8 @@ class AndroidTVBoxMediaPlayer(CoordinatorEntity[AndroidTVBoxUpdateCoordinator], 
 
     @property
     def state(self) -> Optional[str]:
-        # Consider device usable when ADB is connected; UI controls remain available
-        if self.coordinator.data.is_connected:
-            return MediaPlayerState.IDLE
-        return MediaPlayerState.OFF
+        # Reflect screen state for power toggle usability
+        return MediaPlayerState.ON if self.coordinator.data.screen_on else MediaPlayerState.OFF
 
     @property
     def volume_level(self) -> Optional[float]:
@@ -113,7 +111,13 @@ class AndroidTVBoxMediaPlayer(CoordinatorEntity[AndroidTVBoxUpdateCoordinator], 
 
     @property
     def source(self) -> Optional[str]:
-        # Not strictly tracked; could infer from current_app_package if implemented
+        # Map current foreground package back to a user-friendly source name
+        pkg = self.coordinator.data.current_app_package
+        if not pkg:
+            return None
+        for name, package in self._apps.items():
+            if package == pkg:
+                return name
         return None
 
     async def async_select_source(self, source: str) -> None:

@@ -216,6 +216,13 @@ class AndroidTVBoxUpdateCoordinator(DataUpdateCoordinator[AndroidTVBoxData]):
                 except Exception as e:
                     _LOGGER.debug("Failed to get volume state: %s", e)
 
+                # Update current app
+                try:
+                    pkg = await self.adb_manager.get_current_app()
+                    self.data.current_app_package = pkg
+                except Exception as e:
+                    _LOGGER.debug("Failed to get current app: %s", e)
+
                 # Update device info periodically
                 now = datetime.now()
                 if (
