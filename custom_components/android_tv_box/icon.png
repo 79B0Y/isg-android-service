@@ -1,0 +1,18 @@
+# This is a placeholder for the actual PNG icon file
+# In a real implementation, you would replace this with a 512x512 PNG image
+# The SVG version is available in icons/icon.svg and can be converted to PNG using:
+# 
+# Using online converter:
+# 1. Go to https://www.svgtopng.com/
+# 2. Upload the icons/icon.svg file
+# 3. Set size to 512x512
+# 4. Download and replace this file
+#
+# Using command line (if available):
+# inkscape --export-png=icon.png --export-width=512 --export-height=512 icons/icon.svg
+#
+# The icon should be:
+# - 512x512 pixels
+# - PNG format with transparency
+# - Android TV Box themed design
+# - Dark background compatible

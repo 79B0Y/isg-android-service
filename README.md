@@ -1,5 +1,9 @@
 # Android TV Box Integration for Home Assistant
 
+<div align="center">
+
+![Android TV Box Logo](custom_components/android_tv_box/icons/icon.svg)
+
 [![GitHub Release][releases-shield]][releases]
 [![GitHub Activity][commits-shield]][commits]
 [![License][license-shield]][license]
@@ -7,17 +11,32 @@
 
 ![Project Maintenance][maintenance-shield]
 
-A comprehensive Home Assistant integration for controlling Android TV Box devices via ADB (Android Debug Bridge).
+**A comprehensive Home Assistant integration for controlling Android TV Box devices via ADB (Android Debug Bridge)**
+
+</div>
 
 ## Features
 
 - **ADB Connection Management**: Monitor and control ADB connection status
-- **Power Control**: Turn your Android TV Box on/off remotely
+- **Power Control**: Turn your Android TV Box on/off remotely  
 - **WiFi Management**: Enable/disable WiFi on supported devices
 - **Device Information**: Automatic detection of device model, Android version, and brand
 - **Real-time Monitoring**: Live status updates with configurable intervals
+- **Dynamic Icons**: Smart icons that change based on device state
 - **Multi-language Support**: English and Chinese localization
 - **HACS Compatible**: Easy installation through Home Assistant Community Store
+
+### Dynamic Icons
+
+| Entity | State | Icon | Description |
+|--------|-------|------|-------------|
+| Power Switch | On | `🟢 mdi:television-box` | Device is powered on |
+| Power Switch | Standby | `🟡 mdi:television-ambient-light` | Device in standby mode |
+| Power Switch | Off | `⚫ mdi:television-off` | Device is powered off |
+| WiFi Switch | Connected | `🟢 mdi:wifi` | WiFi enabled and connected |
+| WiFi Switch | Enabled | `🟡 mdi:wifi-strength-1` | WiFi enabled but not connected |
+| WiFi Switch | Disabled | `🔴 mdi:wifi-off` | WiFi disabled |
+| ADB Connection | Connected | `🟢 mdi:usb-port` | ADB connection active |
 
 ## Quick Start
 

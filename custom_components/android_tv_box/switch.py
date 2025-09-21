@@ -93,7 +93,7 @@ class AndroidTVBoxADBConnectionSwitch(AndroidTVBoxSwitchEntity):
             "ADB Connection"
         )
         
-        self._attr_icon = "mdi:android-debug-bridge"
+        self._attr_icon = "mdi:usb-port"
         self._attr_entity_category = "diagnostic"
 
     @property
@@ -171,7 +171,17 @@ class AndroidTVBoxPowerSwitch(AndroidTVBoxSwitchEntity):
             "Power"
         )
         
-        self._attr_icon = "mdi:power"
+        self._attr_icon = "mdi:television-box"
+
+    @property
+    def icon(self) -> str:
+        """Return icon based on power state."""
+        if self.coordinator.data.power_state == "on":
+            return "mdi:television-box"
+        elif self.coordinator.data.power_state == "standby":
+            return "mdi:television-ambient-light"
+        else:
+            return "mdi:television-off"
 
     @property
     def is_on(self) -> bool:
@@ -220,6 +230,16 @@ class AndroidTVBoxWiFiSwitch(AndroidTVBoxSwitchEntity):
         )
         
         self._attr_icon = "mdi:wifi"
+
+    @property
+    def icon(self) -> str:
+        """Return icon based on WiFi state."""
+        if self.coordinator.data.wifi_enabled and self.coordinator.data.wifi_connected:
+            return "mdi:wifi"
+        elif self.coordinator.data.wifi_enabled:
+            return "mdi:wifi-strength-1"
+        else:
+            return "mdi:wifi-off"
 
     @property
     def is_on(self) -> bool:

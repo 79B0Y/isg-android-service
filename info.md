@@ -1,5 +1,9 @@
 # Android TV Box Integration
 
+<div align="center">
+
+![Android TV Box Logo](https://raw.githubusercontent.com/bo/isg-android-service/main/custom_components/android_tv_box/icons/icon.svg)
+
 [![GitHub Release][releases-shield]][releases]
 [![GitHub Activity][commits-shield]][commits]
 [![License][license-shield]](LICENSE)
@@ -8,11 +12,15 @@
 ![Project Maintenance][maintenance-shield]
 [![BuyMeCoffee][buymecoffeebadge]][buymecoffee]
 
-**This component will set up the following platforms.**
+**A comprehensive Home Assistant integration for controlling Android TV Box devices via ADB**
+
+</div>
+
+## Platforms
 
 Platform | Description
 -- | --
-`switch` | Control ADB connection, power state, and WiFi.
+`switch` | Control ADB connection, power state, and WiFi with dynamic icons
 
 ## Features
 

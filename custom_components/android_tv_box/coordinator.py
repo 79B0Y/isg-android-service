@@ -285,4 +285,5 @@ class AndroidTVBoxUpdateCoordinator(DataUpdateCoordinator[AndroidTVBoxData]):
             "model": self.data.device_model or "TV Box",
             "sw_version": self.data.android_version,
             "configuration_url": f"http://{self.host}:{self.port}",
+            "icon": "mdi:television-box",
         }
