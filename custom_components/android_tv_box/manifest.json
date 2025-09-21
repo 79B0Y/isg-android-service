@@ -1,0 +1,15 @@
+{
+  "domain": "android_tv_box",
+  "name": "Android TV Box Integration",
+  "codeowners": ["@bo"],
+  "config_flow": true,
+  "documentation": "https://github.com/bo/isg-android-service",
+  "issue_tracker": "https://github.com/bo/isg-android-service/issues",
+  "requirements": [
+    "adb-shell>=0.4.4",
+    "pure-python-adb>=0.3.0"
+  ],
+  "version": "1.0.0",
+  "iot_class": "local_polling",
+  "integration_type": "device"
+}
