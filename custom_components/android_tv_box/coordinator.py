@@ -116,9 +116,6 @@ class AndroidTVBoxUpdateCoordinator(DataUpdateCoordinator[AndroidTVBoxData]):
         # Initialize ADB manager
         self.adb_manager = ADBManager(self.host, self.port)
         
-        # Initialize data
-        self.data = AndroidTVBoxData()
-        
         # Update intervals
         self._last_device_info_update: Optional[datetime] = None
         self._device_info_interval = timedelta(minutes=15)
@@ -131,6 +128,10 @@ class AndroidTVBoxUpdateCoordinator(DataUpdateCoordinator[AndroidTVBoxData]):
             name=DOMAIN,
             update_interval=DEFAULT_SCAN_INTERVAL,
         )
+        
+        # Initialize data after super().__init__()
+        # This ensures DataUpdateCoordinator doesn't override our data
+        self.data = AndroidTVBoxData()
 
     async def async_setup(self) -> bool:
         """Set up the coordinator."""
@@ -285,5 +286,4 @@ class AndroidTVBoxUpdateCoordinator(DataUpdateCoordinator[AndroidTVBoxData]):
             "model": self.data.device_model or "TV Box",
             "sw_version": self.data.android_version,
             "configuration_url": f"http://{self.host}:{self.port}",
-            "icon": "mdi:television-box",
         }
