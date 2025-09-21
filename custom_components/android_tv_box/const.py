@@ -108,3 +108,7 @@ UPDATE_INTERVALS: Final = {
     "device_info": timedelta(minutes=15),
     "network_info": timedelta(minutes=5),
 }
+
+# Camera / Screenshot settings
+SCREENSHOT_DIR: Final = "/home/bo/.homeassistant/www/screenshots"
+SCREENSHOT_RETAIN: Final = 10  # keep last N screenshots locally
