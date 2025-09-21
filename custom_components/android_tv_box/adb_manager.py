@@ -295,6 +295,77 @@ class ADBManager:
             
         return device_info
 
+    # ===== High-level helpers for buttons =====
+
+    async def send_key(self, keycode: int) -> bool:
+        """Send an Android keyevent."""
+        if not self.is_connected:
+            return False
+        try:
+            await self._execute_command(f"input keyevent {keycode}")
+            return True
+        except Exception as e:
+            _LOGGER.warning("send_key failed: %s", e)
+            return False
+
+    async def restart_isg(self) -> bool:
+        """Force-stop and restart the ISG app."""
+        if not self.is_connected:
+            return False
+        try:
+            # Stop then start the ISG main activity
+            await self._execute_command("am force-stop com.linknlink.app.device.isg")
+            await asyncio.sleep(1.5)
+            await self._execute_command("am start -n com.linknlink.app.device.isg/.MainActivity")
+            return True
+        except Exception as e:
+            _LOGGER.warning("restart_isg failed: %s", e)
+            return False
+
+    async def refresh_apps(self) -> bool:
+        """Refresh installed user apps list (pm list packages -3)."""
+        if not self.is_connected:
+            return False
+        try:
+            stdout, _ = await self._execute_command("pm list packages -3")
+            _LOGGER.debug("Installed apps sample: %s", (stdout or "").splitlines()[:10])
+            return True
+        except Exception as e:
+            _LOGGER.warning("refresh_apps failed: %s", e)
+            return False
+
+    async def reboot_device(self) -> bool:
+        """Reboot the device."""
+        if not self.is_connected:
+            return False
+        try:
+            await self._execute_command("svc power reboot || reboot")
+            return True
+        except Exception as e:
+            _LOGGER.warning("reboot_device failed: %s", e)
+            return False
+
+    async def take_screenshot(self) -> Optional[str]:
+        """Take a screenshot on device and save to /sdcard/Download/.
+
+        Returns the device file path if successful.
+        """
+        if not self.is_connected:
+            return None
+        try:
+            # Milliseconds timestamp-based name
+            ts = int(asyncio.get_event_loop().time() * 1000)
+            device_path = f"/sdcard/Download/android_tv_box_{ts}.png"
+            await self._execute_command(f"screencap -p {device_path}")
+            # Verify file exists
+            stdout, _ = await self._execute_command(f"ls {device_path}")
+            if device_path in (stdout or ""):
+                return device_path
+            return None
+        except Exception as e:
+            _LOGGER.warning("take_screenshot failed: %s", e)
+            return None
+
     async def test_adb_connection(self) -> Dict[str, Any]:
         """Test ADB connection and return connection details."""
         result = {

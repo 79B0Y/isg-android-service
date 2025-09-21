@@ -64,6 +64,36 @@ ENTITY_SUFFIXES: Final = {
     "wifi": "wifi",
 }
 
+# Button unique ID suffixes
+BUTTON_SUFFIXES: Final = {
+    # Navigation
+    "nav_up": "btn_nav_up",
+    "nav_down": "btn_nav_down",
+    "nav_left": "btn_nav_left",
+    "nav_right": "btn_nav_right",
+    "nav_select": "btn_nav_select",
+    "nav_back": "btn_nav_back",
+    "nav_home": "btn_nav_home",
+    "nav_menu": "btn_nav_menu",
+    # Actions
+    "restart_isg": "btn_restart_isg",
+    "refresh_apps": "btn_refresh_apps",
+    "reboot_device": "btn_reboot_device",
+    "screenshot": "btn_screenshot",
+}
+
+# Android keycodes for navigation
+ANDROID_KEYCODES: Final = {
+    "UP": 19,
+    "DOWN": 20,
+    "LEFT": 21,
+    "RIGHT": 22,
+    "CENTER": 23,  # DPAD_CENTER (OK)
+    "BACK": 4,
+    "HOME": 3,
+    "MENU": 82,
+}
+
 # Device info attributes
 ATTR_DEVICE_MODEL: Final = "device_model"
 ATTR_ANDROID_VERSION: Final = "android_version"

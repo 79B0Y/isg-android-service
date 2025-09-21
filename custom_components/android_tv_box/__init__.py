@@ -13,7 +13,7 @@ from .coordinator import AndroidTVBoxUpdateCoordinator
 _LOGGER = logging.getLogger(__name__)
 
 # Platforms supported by this integration
-PLATFORMS: list[Platform] = [Platform.SWITCH]
+PLATFORMS: list[Platform] = [Platform.SWITCH, Platform.BUTTON]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
