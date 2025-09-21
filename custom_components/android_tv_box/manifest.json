@@ -6,8 +6,7 @@
   "documentation": "https://github.com/bo/isg-android-service",
   "issue_tracker": "https://github.com/bo/isg-android-service/issues",
   "requirements": [
-    "adb-shell>=0.4.4",
-    "pure-python-adb>=0.3.0"
+    "adb-shell>=0.4.4"
   ],
   "version": "0.1.1",
   "iot_class": "local_polling",
