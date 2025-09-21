@@ -9,7 +9,7 @@
     "adb-shell>=0.4.4",
     "pure-python-adb>=0.3.0"
   ],
-  "version": "1.0.0",
+  "version": "0.1.0",
   "iot_class": "local_polling",
   "integration_type": "device"
 }
