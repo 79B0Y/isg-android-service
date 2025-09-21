@@ -76,8 +76,8 @@ class AndroidTVBoxMediaPlayer(CoordinatorEntity[AndroidTVBoxUpdateCoordinator], 
 
     @property
     def state(self) -> Optional[str]:
-        # Treat screen_on as playing/idle; off as off
-        if self.coordinator.data.screen_on:
+        # Consider device usable when ADB is connected; UI controls remain available
+        if self.coordinator.data.is_connected:
             return MediaPlayerState.IDLE
         return MediaPlayerState.OFF
 
@@ -123,4 +123,3 @@ class AndroidTVBoxMediaPlayer(CoordinatorEntity[AndroidTVBoxUpdateCoordinator], 
         await self.coordinator.adb_manager.start_app(pkg)
         await asyncio.sleep(1.0)
         await self.coordinator.async_request_refresh()
-
