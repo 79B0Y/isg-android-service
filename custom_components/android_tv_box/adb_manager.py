@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 from typing import Any, Dict, Optional, Tuple
 
 try:
@@ -365,6 +366,24 @@ class ADBManager:
         except Exception as e:
             _LOGGER.warning("take_screenshot failed: %s", e)
             return None
+
+    async def pull_file(self, device_path: str, local_path: str) -> bool:
+        """Pull a file from device to host using adb-shell file sync.
+
+        local_path should be an absolute path on the host.
+        """
+        if not self.is_connected or not self._device:
+            return False
+        try:
+            # Ensure directory exists
+            os.makedirs(os.path.dirname(local_path), exist_ok=True)
+            loop = asyncio.get_event_loop()
+            # Use the device's pull method in executor
+            await loop.run_in_executor(None, self._device.pull, device_path, local_path)
+            return os.path.exists(local_path) and os.path.getsize(local_path) > 0
+        except Exception as e:
+            _LOGGER.warning("pull_file failed: %s", e)
+            return False
 
     async def test_adb_connection(self) -> Dict[str, Any]:
         """Test ADB connection and return connection details."""

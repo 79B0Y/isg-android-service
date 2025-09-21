@@ -137,9 +137,16 @@ class AndroidTVBoxScreenshotButton(AndroidTVBoxButtonBase):
 
     async def async_press(self) -> None:
         try:
-            path = await self.coordinator.adb_manager.take_screenshot()
-            if path:
-                _LOGGER.info("Screenshot saved on device: %s", path)
+            device_path = await self.coordinator.adb_manager.take_screenshot()
+            if device_path:
+                _LOGGER.info("Screenshot saved on device: %s", device_path)
+                # Also pull to HA www directory for easy viewing
+                local_dir = "/home/bo/.homeassistant/www/screenshots"
+                ts = int(asyncio.get_event_loop().time() * 1000)
+                local_path = f"{local_dir}/android_tv_box_{ts}.png"
+                ok = await self.coordinator.adb_manager.pull_file(device_path, local_path)
+                if ok:
+                    _LOGGER.info("Screenshot copied to: %s", local_path)
             await self.coordinator.async_request_refresh()
         except Exception as e:
             _LOGGER.warning("Screenshot failed: %s", e)
