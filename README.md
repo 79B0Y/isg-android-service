@@ -153,6 +153,75 @@ entities:
   - switch.living_room_tv_box_adb_connection
 ```
 
+### Lovelace Examples
+
+- Picture Entity (live view):
+
+```yaml
+type: picture-entity
+entity: camera.android_tv_box_screen
+camera_view: live
+name: Android TV Box Screen
+show_state: false
+```
+
+- Picture Glance with quick actions:
+
+```yaml
+type: picture-glance
+title: Android TV Box
+entities:
+  - entity: button.android_tv_box_nav_up
+  - entity: button.android_tv_box_nav_left
+  - entity: button.android_tv_box_nav_select
+  - entity: button.android_tv_box_nav_right
+  - entity: button.android_tv_box_nav_down
+  - entity: button.android_tv_box_nav_menu
+  - entity: button.android_tv_box_back
+  - entity: button.android_tv_box_nav_home
+camera_image: camera.android_tv_box_screen
+camera_view: live
+```
+
+- Button grid (call button.press services):
+
+```yaml
+type: grid
+title: Android TV Controls
+columns: 4
+cards:
+  - type: button
+    name: Home
+    icon: mdi:home
+    tap_action:
+      action: call-service
+      service: button.press
+      target: { entity_id: button.android_tv_box_nav_home }
+  - type: button
+    name: Menu
+    icon: mdi:menu
+    tap_action:
+      action: call-service
+      service: button.press
+      target: { entity_id: button.android_tv_box_nav_menu }
+  - type: button
+    name: Screenshot
+    icon: mdi:camera
+    tap_action:
+      action: call-service
+      service: button.press
+      target: { entity_id: button.android_tv_box_screenshot }
+  - type: button
+    name: Reboot
+    icon: mdi:restart
+    tap_action:
+      action: call-service
+      service: button.press
+      target: { entity_id: button.android_tv_box_reboot_device }
+```
+
+Screenshots are saved to `/local/screenshots/` by default and can be tweaked in the integration options.
+
 ## Troubleshooting
 
 ### Common Issues
