@@ -120,7 +120,13 @@ class AndroidTVBoxMediaPlayer(CoordinatorEntity[AndroidTVBoxUpdateCoordinator], 
         await self.coordinator.async_request_refresh()
 
     async def async_turn_on(self) -> None:
-        # Low-latency path: quick command + fast polling; immediate HA state updates
+        # Low-latency path with optional optimistic update
+        from .const import OPT_OPTIMISTIC_POWER
+        optimistic = bool(self._config_entry.options.get(OPT_OPTIMISTIC_POWER, True))
+        if optimistic:
+            # Immediately reflect desired state
+            self.coordinator.data.update_power_state("on", True)
+            self.async_write_ha_state()
         await self.coordinator.adb_manager.quick_power(True)
         tap = self._config_entry.options.get(OPT_WAKE_TAP_KEY, "CENTER")
         if tap and tap != "NONE":
@@ -138,6 +144,11 @@ class AndroidTVBoxMediaPlayer(CoordinatorEntity[AndroidTVBoxUpdateCoordinator], 
         await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self) -> None:
+        from .const import OPT_OPTIMISTIC_POWER
+        optimistic = bool(self._config_entry.options.get(OPT_OPTIMISTIC_POWER, True))
+        if optimistic:
+            self.coordinator.data.update_power_state("off", False)
+            self.async_write_ha_state()
         await self.coordinator.adb_manager.quick_power(False)
         for _ in range(3):
             ps, so = await self.coordinator.adb_manager.get_power_state()

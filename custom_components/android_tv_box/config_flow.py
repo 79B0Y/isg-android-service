@@ -27,6 +27,7 @@ from .const import (
     OPT_WAKE_TAP_KEY,
     OPT_OPTIMISTIC_PLAYBACK,
     OPT_PLAY_PAUSE_COMBINED,
+    OPT_OPTIMISTIC_POWER,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -223,6 +224,10 @@ class AndroidTVBoxOptionsFlow(config_entries.OptionsFlow):
                     vol.Optional(
                         OPT_PLAY_PAUSE_COMBINED,
                         default=self.config_entry.options.get(OPT_PLAY_PAUSE_COMBINED, False),
+                    ): bool,
+                    vol.Optional(
+                        OPT_OPTIMISTIC_POWER,
+                        default=self.config_entry.options.get(OPT_OPTIMISTIC_POWER, True),
                     ): bool,
                 }
             ),

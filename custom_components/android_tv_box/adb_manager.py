@@ -198,7 +198,7 @@ class ADBManager:
 
             # Fallback to dumpsys display if screen_on is still unknown
             if screen_on is None:
-                disp, _ = await self._execute_command("dumpsys display | grep -i 'mScreenState\|state=' | head -n 5")
+                disp, _ = await self._execute_command(r"dumpsys display | grep -i 'mScreenState\|state=' | head -n 5")
                 if re.search(r"(mScreenState=ON|state=ON|Display 0 state=ON)", disp or '', re.I):
                     screen_on = True
                     if wakefulness == 'unknown':

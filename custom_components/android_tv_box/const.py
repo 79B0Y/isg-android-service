@@ -131,3 +131,4 @@ OPT_WAKE_TAP_KEY: Final = "wake_tap_key"  # one of: NONE, CENTER, MENU
 # Playback behavior options
 OPT_OPTIMISTIC_PLAYBACK: Final = "optimistic_playback"  # bool
 OPT_PLAY_PAUSE_COMBINED: Final = "play_pause_combined"  # bool: use KEYCODE_MEDIA_PLAY_PAUSE for both actions
+OPT_OPTIMISTIC_POWER: Final = "optimistic_power"  # bool
