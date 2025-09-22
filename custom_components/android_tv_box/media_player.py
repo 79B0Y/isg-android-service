@@ -17,7 +17,14 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN, OPT_APPS, OPT_WAKE_TAP_KEY, ANDROID_KEYCODES
+from .const import (
+    DOMAIN,
+    OPT_APPS,
+    OPT_WAKE_TAP_KEY,
+    ANDROID_KEYCODES,
+    OPT_OPTIMISTIC_PLAYBACK,
+    OPT_PLAY_PAUSE_COMBINED,
+)
 from .coordinator import AndroidTVBoxUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -171,9 +178,16 @@ class AndroidTVBoxMediaPlayer(CoordinatorEntity[AndroidTVBoxUpdateCoordinator], 
         await self.coordinator.async_request_refresh()
 
     async def async_media_play(self) -> None:
-        await self.coordinator.adb_manager.media_play()
-        # Fast confirm loop (<= 500ms)
+        combined = bool(self._config_entry.options.get(OPT_PLAY_PAUSE_COMBINED, False))
+        optimistic = bool(self._config_entry.options.get(OPT_OPTIMISTIC_PLAYBACK, True))
+        if combined:
+            await self.coordinator.adb_manager.media_play_pause()
+        else:
+            await self.coordinator.adb_manager.media_play()
         desired = "playing"
+        if optimistic:
+            self.coordinator.data.playback_state = desired
+            self.async_write_ha_state()
         for _ in range(5):
             st = await self.coordinator.adb_manager.get_playback_state()
             self.coordinator.data.playback_state = st
@@ -184,8 +198,16 @@ class AndroidTVBoxMediaPlayer(CoordinatorEntity[AndroidTVBoxUpdateCoordinator], 
         await self.coordinator.async_request_refresh()
 
     async def async_media_pause(self) -> None:
-        await self.coordinator.adb_manager.media_pause()
+        combined = bool(self._config_entry.options.get(OPT_PLAY_PAUSE_COMBINED, False))
+        optimistic = bool(self._config_entry.options.get(OPT_OPTIMISTIC_PLAYBACK, True))
+        if combined:
+            await self.coordinator.adb_manager.media_play_pause()
+        else:
+            await self.coordinator.adb_manager.media_pause()
         desired = "paused"
+        if optimistic:
+            self.coordinator.data.playback_state = desired
+            self.async_write_ha_state()
         for _ in range(5):
             st = await self.coordinator.adb_manager.get_playback_state()
             self.coordinator.data.playback_state = st

@@ -25,6 +25,8 @@ from .const import (
     SCREENSHOT_RETAIN,
     OPT_APPS,
     OPT_WAKE_TAP_KEY,
+    OPT_OPTIMISTIC_PLAYBACK,
+    OPT_PLAY_PAUSE_COMBINED,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -214,6 +216,14 @@ class AndroidTVBoxOptionsFlow(config_entries.OptionsFlow):
                         OPT_WAKE_TAP_KEY,
                         default=self.config_entry.options.get(OPT_WAKE_TAP_KEY, "CENTER"),
                     ): vol.In(["NONE", "CENTER", "MENU"]),
+                    vol.Optional(
+                        OPT_OPTIMISTIC_PLAYBACK,
+                        default=self.config_entry.options.get(OPT_OPTIMISTIC_PLAYBACK, True),
+                    ): bool,
+                    vol.Optional(
+                        OPT_PLAY_PAUSE_COMBINED,
+                        default=self.config_entry.options.get(OPT_PLAY_PAUSE_COMBINED, False),
+                    ): bool,
                 }
             ),
         )
