@@ -112,12 +112,8 @@ class AndroidTVBoxRefreshAppsButton(AndroidTVBoxButtonBase):
 
     async def async_press(self) -> None:
         try:
-            # Immediate refresh of installed apps and notify select entities
-            updated = await self.coordinator.async_refresh_installed_apps()
-            if not updated:
-                # fallback to generic refresh
-                await self.coordinator.adb_manager.refresh_apps()
-                await self.coordinator.async_request_refresh()
+            await self.coordinator.adb_manager.refresh_apps()
+            await self.coordinator.async_request_refresh()
         except Exception as e:
             _LOGGER.warning("Refresh apps failed: %s", e)
 

@@ -92,7 +92,3 @@ class AndroidTVBoxAppSelect(CoordinatorEntity[AndroidTVBoxUpdateCoordinator], Se
         # Sync options from latest installed apps
         self._update_options()
 
-    def _handle_coordinator_update(self) -> None:
-        # Recompute options on coordinator data changes
-        self._update_options()
-        return super()._handle_coordinator_update()
