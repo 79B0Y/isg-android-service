@@ -248,6 +248,17 @@ class ADBManager:
             _LOGGER.error("Failed to set power state to %s: %s", power_on, e)
             return False
 
+    async def quick_power(self, power_on: bool) -> None:
+        """Fire-and-forget style power command with minimal delay.
+
+        Used for immediate UI feedback; robustness handled elsewhere.
+        """
+        try:
+            cmd = ADB_CONTROL_COMMANDS["power_on" if power_on else "power_off"]
+            await self._execute_command(cmd)
+        except Exception as e:
+            _LOGGER.debug("quick_power failed: %s", e)
+
     async def get_wifi_state(self) -> Dict[str, Any]:
         """Get WiFi connection state and information."""
         wifi_info = {

@@ -104,28 +104,32 @@ class AndroidTVBoxMediaPlayer(CoordinatorEntity[AndroidTVBoxUpdateCoordinator], 
         await self.coordinator.async_request_refresh()
 
     async def async_turn_on(self) -> None:
-        # Immediate power change with instant status query to avoid double clicks
-        ok = await self.coordinator.adb_manager.set_power_state(True)
-        if ok:
-            # Re-read power immediately and update local state
+        # Low-latency path: quick command + fast polling; immediate HA state updates
+        await self.coordinator.adb_manager.quick_power(True)
+        tap = self._config_entry.options.get(OPT_WAKE_TAP_KEY, "CENTER")
+        if tap and tap != "NONE":
+            keycode = ANDROID_KEYCODES.get(tap)
+            if keycode:
+                await asyncio.sleep(0.1)
+                await self.coordinator.adb_manager.send_key(keycode)
+        for _ in range(3):
             ps, so = await self.coordinator.adb_manager.get_power_state()
             self.coordinator.data.update_power_state(ps, so)
             self.async_write_ha_state()
-            # Optional wake tap (CENTER/MENU) to ensure screen lights
-            tap = self._config_entry.options.get(OPT_WAKE_TAP_KEY, "CENTER")
-            if tap and tap != "NONE":
-                keycode = ANDROID_KEYCODES.get(tap)
-                if keycode:
-                    await asyncio.sleep(0.2)
-                    await self.coordinator.adb_manager.send_key(keycode)
+            if so:
+                break
+            await asyncio.sleep(0.1)
         await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self) -> None:
-        ok = await self.coordinator.adb_manager.set_power_state(False)
-        if ok:
+        await self.coordinator.adb_manager.quick_power(False)
+        for _ in range(3):
             ps, so = await self.coordinator.adb_manager.get_power_state()
             self.coordinator.data.update_power_state(ps, so)
             self.async_write_ha_state()
+            if not so:
+                break
+            await asyncio.sleep(0.1)
         await self.coordinator.async_request_refresh()
 
     @property
