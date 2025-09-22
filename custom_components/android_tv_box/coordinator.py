@@ -332,4 +332,17 @@ class AndroidTVBoxUpdateCoordinator(DataUpdateCoordinator[AndroidTVBoxData]):
             "model": self.data.device_model or "TV Box",
             "sw_version": self.data.android_version,
             "configuration_url": f"http://{self.host}:{self.port}",
-        } 
+        }
+
+    async def async_refresh_installed_apps(self) -> bool:
+        """Immediately refresh installed apps and notify listeners."""
+        try:
+            apps = await self.adb_manager.list_installed_apps()
+            if apps:
+                self.data.installed_apps = apps
+                # push update to entities
+                self.async_set_updated_data(self.data)
+                return True
+        except Exception as e:
+            _LOGGER.debug("Immediate apps refresh failed: %s", e)
+        return False

@@ -35,6 +35,12 @@
   - `screenshot_dir`: override target folder
   - `screenshot_retain`: keep last N images (default 10)
 
+## App Selector (Select)
+- Entity: `select.android_tv_box_app_selector` (choose installed apps)
+- Sources: merges Options `apps` (friendly names → packages/components) with `pm list packages -3`.
+- Current: reflects current foreground app (mapped name if available).
+- Refresh list: press `button.android_tv_box_refresh_apps` to trigger an immediate refresh.
+
 ## Coding Style & Naming Conventions
 - Python 3.11+, follow PEP8 (4‑space indents, 100‑120 col soft limit).
 - Names: modules `snake_case.py`, classes `CamelCase`, functions/vars `snake_case`, constants `UPPER_SNAKE`.

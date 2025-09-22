@@ -222,6 +222,26 @@ cards:
 
 Screenshots are saved to `/local/screenshots/` by default and can be tweaked in the integration options.
 
+### App Selector (Select)
+
+- Entity: `select.android_tv_box_app_selector`
+- Options:
+  - Merges friendly names from Options → `apps` (JSON) with installed packages (`pm list packages -3`).
+  - Selecting a name launches its package/component; selecting a package launches that app.
+- Current value: shows the friendly name (if mapped) or package of the current foreground app.
+
+Configure friendly names (Options → apps):
+
+```json
+{
+  "ISG": "com.linknlink.app.device.isg",
+  "YouTube": "com.google.android.youtube",
+  "Netflix": "com.netflix.mediaclient",
+  "Spotify": "com.spotify.music"
+}
+```
+
+
 ## Troubleshooting
 
 ### Common Issues
