@@ -51,6 +51,8 @@ class AndroidTVBoxMediaPlayer(CoordinatorEntity[AndroidTVBoxUpdateCoordinator], 
             | MediaPlayerEntityFeature.VOLUME_SET
             | MediaPlayerEntityFeature.VOLUME_STEP
             | MediaPlayerEntityFeature.SELECT_SOURCE
+            | MediaPlayerEntityFeature.PLAY
+            | MediaPlayerEntityFeature.PAUSE
         )
 
         # Parse apps mapping from options (JSON string) if provided
@@ -76,7 +78,12 @@ class AndroidTVBoxMediaPlayer(CoordinatorEntity[AndroidTVBoxUpdateCoordinator], 
 
     @property
     def state(self) -> Optional[str]:
-        # Report strictly ON/OFF for clear UX
+        # Prefer playback state if available
+        if self.coordinator.data.playback_state == "playing":
+            return MediaPlayerState.PLAYING
+        if self.coordinator.data.playback_state == "paused":
+            return MediaPlayerState.PAUSED
+        # Report strictly ON/OFF for power UX
         if self.coordinator.data.screen_on:
             return MediaPlayerState.ON
         if getattr(self.coordinator.data, "power_state", "unknown") == "on":
@@ -152,5 +159,26 @@ class AndroidTVBoxMediaPlayer(CoordinatorEntity[AndroidTVBoxUpdateCoordinator], 
         if not pkg:
             return
         await self.coordinator.adb_manager.start_app(pkg)
-        await asyncio.sleep(1.0)
+        # Immediate app/state refresh
+        await asyncio.sleep(0.3)
+        cur = await self.coordinator.adb_manager.get_current_app()
+        self.coordinator.data.current_app_package = cur
+        # Playback state may change after switching app
+        self.coordinator.data.playback_state = await self.coordinator.adb_manager.get_playback_state()
+        self.async_write_ha_state()
+        await self.coordinator.async_request_refresh()
+
+    async def async_media_play(self) -> None:
+        await self.coordinator.adb_manager.media_play()
+        # immediate status fetch
+        st = await self.coordinator.adb_manager.get_playback_state()
+        self.coordinator.data.playback_state = st
+        self.async_write_ha_state()
+        await self.coordinator.async_request_refresh()
+
+    async def async_media_pause(self) -> None:
+        await self.coordinator.adb_manager.media_pause()
+        st = await self.coordinator.adb_manager.get_playback_state()
+        self.coordinator.data.playback_state = st
+        self.async_write_ha_state()
         await self.coordinator.async_request_refresh()

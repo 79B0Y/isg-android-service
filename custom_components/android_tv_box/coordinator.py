@@ -56,6 +56,7 @@ class AndroidTVBoxData:
         self.volume_percentage: float = 0.0
         self.muted: bool = False
         self.current_app_package: Optional[str] = None
+        self.playback_state: str = "idle"  # playing, paused, idle
         
         # Error tracking
         self.last_error: Optional[str] = None
@@ -222,6 +223,12 @@ class AndroidTVBoxUpdateCoordinator(DataUpdateCoordinator[AndroidTVBoxData]):
                     self.data.current_app_package = pkg
                 except Exception as e:
                     _LOGGER.debug("Failed to get current app: %s", e)
+
+                # Update playback state (lightweight)
+                try:
+                    self.data.playback_state = await self.adb_manager.get_playback_state()
+                except Exception as e:
+                    _LOGGER.debug("Failed to get playback state: %s", e)
 
                 # Update device info periodically
                 now = datetime.now()

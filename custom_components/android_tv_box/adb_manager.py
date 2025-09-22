@@ -531,6 +531,60 @@ class ADBManager:
             _LOGGER.warning("pull_file failed: %s", e)
             return False
 
+    # ===== Media playback helpers =====
+
+    async def media_play(self) -> bool:
+        try:
+            await self._execute_command("input keyevent 126")
+            return True
+        except Exception as e:
+            _LOGGER.debug("media_play failed: %s", e)
+            return False
+
+    async def media_pause(self) -> bool:
+        try:
+            await self._execute_command("input keyevent 127")
+            return True
+        except Exception as e:
+            _LOGGER.debug("media_pause failed: %s", e)
+            return False
+
+    async def media_play_pause(self) -> bool:
+        try:
+            await self._execute_command("input keyevent 85")
+            return True
+        except Exception as e:
+            _LOGGER.debug("media_play_pause failed: %s", e)
+            return False
+
+    async def get_playback_state(self) -> str:
+        """Return playback state: 'playing', 'paused', or 'idle'."""
+        try:
+            out, _ = await self._execute_command(
+                "dumpsys media_session | grep -m 1 -E 'state=PlaybackState|state='"
+            )
+            # Numeric form: state=PlaybackState {state=3, ...}
+            m = re.search(r"state=PlaybackState \{state=(\d+)", out or "")
+            if m:
+                code = int(m.group(1))
+                if code == 3:
+                    return "playing"
+                if code in (2,):
+                    return "paused"
+                return "idle"
+            # Text form: state=PLAYING/PAUSED
+            m2 = re.search(r"state=([A-Z_]+)", out or "")
+            if m2:
+                st = m2.group(1)
+                if st == "PLAYING":
+                    return "playing"
+                if st in ("PAUSED", "STOPPED"): 
+                    return "paused"
+            return "idle"
+        except Exception as e:
+            _LOGGER.debug("get_playback_state failed: %s", e)
+            return "idle"
+
     async def test_adb_connection(self) -> Dict[str, Any]:
         """Test ADB connection and return connection details."""
         result = {
