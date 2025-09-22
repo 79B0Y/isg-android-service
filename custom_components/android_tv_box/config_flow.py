@@ -23,6 +23,8 @@ from .const import (
     OPT_SCREENSHOT_RETAIN,
     SCREENSHOT_DIR,
     SCREENSHOT_RETAIN,
+    OPT_APPS,
+    OPT_WAKE_TAP_KEY,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -208,6 +210,10 @@ class AndroidTVBoxOptionsFlow(config_entries.OptionsFlow):
                         OPT_APPS,
                         default=self.config_entry.options.get(OPT_APPS, "{\"ISG\": \"com.linknlink.app.device.isg\"}"),
                     ): cv.string,
+                    vol.Optional(
+                        OPT_WAKE_TAP_KEY,
+                        default=self.config_entry.options.get(OPT_WAKE_TAP_KEY, "CENTER"),
+                    ): vol.In(["NONE", "CENTER", "MENU"]),
                 }
             ),
         )

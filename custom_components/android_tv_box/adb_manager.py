@@ -366,23 +366,47 @@ class ADBManager:
             _LOGGER.warning("set_volume failed: %s", e)
             return False
 
-    async def start_app(self, package: str) -> bool:
-        """Start an app by package. Tries monkey then am start."""
-        if not package:
+    async def start_app(self, target: str) -> bool:
+        """Start an app by package or component.
+
+        - If `target` contains '/', treat as component for am start -n
+        - Else resolve launcher activity or use monkey
+        """
+        if not target:
             return False
         try:
-            await self._execute_command(
-                f"monkey -p {package} -c android.intent.category.LAUNCHER 1"
-            )
-            await asyncio.sleep(0.5)
-            return True
-        except Exception:
-            try:
-                await self._execute_command(f"am start -n {package}")
-                await asyncio.sleep(0.5)
+            if "/" in target:
+                # Component specified
+                await self._execute_command(f"am start -n {target}")
+                await asyncio.sleep(0.8)
                 return True
-            except Exception as e:
-                _LOGGER.warning("start_app failed for %s: %s", package, e)
+
+            package = target
+            # Try to resolve launcher activity
+            comp_out, _ = await self._execute_command(
+                f"cmd package resolve-activity --brief {package} | tail -n 1"
+            )
+            comp_out = (comp_out or "").strip()
+            if comp_out and "/" in comp_out:
+                await self._execute_command(f"am start -n {comp_out}")
+                await asyncio.sleep(0.8)
+                return True
+
+            # Fallback to main launcher intent
+            await self._execute_command(
+                f"am start -a android.intent.action.MAIN -c android.intent.category.LAUNCHER {package}"
+            )
+            await asyncio.sleep(0.8)
+            return True
+        except Exception as e:
+            _LOGGER.warning("start_app failed for %s: %s", target, e)
+            # Final fallback to monkey
+            try:
+                await self._execute_command(f"monkey -p {target} -c android.intent.category.LAUNCHER 1")
+                await asyncio.sleep(0.8)
+                return True
+            except Exception as e2:
+                _LOGGER.warning("monkey fallback failed for %s: %s", target, e2)
                 return False
 
     async def get_current_app(self) -> Optional[str]:

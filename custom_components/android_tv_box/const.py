@@ -119,3 +119,6 @@ OPT_SCREENSHOT_RETAIN: Final = "screenshot_retain"
 
 # Options for media player apps mapping (JSON string of {label: package})
 OPT_APPS: Final = "apps"
+
+# Option: send an extra key after wake to ensure screen lights
+OPT_WAKE_TAP_KEY: Final = "wake_tap_key"  # one of: NONE, CENTER, MENU

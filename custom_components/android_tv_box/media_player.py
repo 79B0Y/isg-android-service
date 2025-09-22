@@ -17,7 +17,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN, OPT_APPS
+from .const import DOMAIN, OPT_APPS, OPT_WAKE_TAP_KEY, ANDROID_KEYCODES
 from .coordinator import AndroidTVBoxUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -111,6 +111,13 @@ class AndroidTVBoxMediaPlayer(CoordinatorEntity[AndroidTVBoxUpdateCoordinator], 
             ps, so = await self.coordinator.adb_manager.get_power_state()
             self.coordinator.data.update_power_state(ps, so)
             self.async_write_ha_state()
+            # Optional wake tap (CENTER/MENU) to ensure screen lights
+            tap = self._config_entry.options.get(OPT_WAKE_TAP_KEY, "CENTER")
+            if tap and tap != "NONE":
+                keycode = ANDROID_KEYCODES.get(tap)
+                if keycode:
+                    await asyncio.sleep(0.2)
+                    await self.coordinator.adb_manager.send_key(keycode)
         await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self) -> None:
