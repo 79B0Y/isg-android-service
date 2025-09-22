@@ -57,6 +57,7 @@ class AndroidTVBoxData:
         self.muted: bool = False
         self.current_app_package: Optional[str] = None
         self.playback_state: str = "idle"  # playing, paused, idle
+        self.installed_apps: list[str] = []
         
         # Error tracking
         self.last_error: Optional[str] = None
@@ -127,6 +128,7 @@ class AndroidTVBoxUpdateCoordinator(DataUpdateCoordinator[AndroidTVBoxData]):
         # Update intervals
         self._last_device_info_update: Optional[datetime] = None
         self._device_info_interval = timedelta(minutes=15)
+        self._installed_apps_interval = timedelta(minutes=15)
         self._connection_check_failures = 0
         self._max_failures_before_reconnect = 3
 
@@ -229,6 +231,19 @@ class AndroidTVBoxUpdateCoordinator(DataUpdateCoordinator[AndroidTVBoxData]):
                     self.data.playback_state = await self.adb_manager.get_playback_state()
                 except Exception as e:
                     _LOGGER.debug("Failed to get playback state: %s", e)
+
+                # Update installed apps periodically
+                now = datetime.now()
+                if (
+                    self._last_device_info_update is None
+                    or now - (self._last_device_info_update or now) > self._installed_apps_interval
+                ):
+                    try:
+                        apps = await self.adb_manager.list_installed_apps()
+                        if apps:
+                            self.data.installed_apps = apps
+                    except Exception as e:
+                        _LOGGER.debug("Failed to list installed apps: %s", e)
 
                 # Update device info periodically
                 now = datetime.now()

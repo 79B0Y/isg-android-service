@@ -481,6 +481,22 @@ class ADBManager:
             _LOGGER.warning("refresh_apps failed: %s", e)
             return False
 
+    async def list_installed_apps(self) -> list[str]:
+        """Return list of installed third-party package names (pm list packages -3)."""
+        if not self.is_connected:
+            return []
+        try:
+            stdout, _ = await self._execute_command("pm list packages -3")
+            packages = []
+            for line in (stdout or "").splitlines():
+                line = line.strip()
+                if line.startswith("package:"):
+                    packages.append(line.split(":", 1)[1])
+            return sorted(set(packages))
+        except Exception as e:
+            _LOGGER.debug("list_installed_apps failed: %s", e)
+            return []
+
     async def reboot_device(self) -> bool:
         """Reboot the device."""
         if not self.is_connected:
