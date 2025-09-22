@@ -53,6 +53,8 @@ class AndroidTVBoxMediaPlayer(CoordinatorEntity[AndroidTVBoxUpdateCoordinator], 
             | MediaPlayerEntityFeature.SELECT_SOURCE
             | MediaPlayerEntityFeature.PLAY
             | MediaPlayerEntityFeature.PAUSE
+            | MediaPlayerEntityFeature.NEXT_TRACK
+            | MediaPlayerEntityFeature.PREVIOUS_TRACK
         )
 
         # Parse apps mapping from options (JSON string) if provided
@@ -170,14 +172,39 @@ class AndroidTVBoxMediaPlayer(CoordinatorEntity[AndroidTVBoxUpdateCoordinator], 
 
     async def async_media_play(self) -> None:
         await self.coordinator.adb_manager.media_play()
-        # immediate status fetch
+        # Fast confirm loop (<= 500ms)
+        desired = "playing"
+        for _ in range(5):
+            st = await self.coordinator.adb_manager.get_playback_state()
+            self.coordinator.data.playback_state = st
+            self.async_write_ha_state()
+            if st == desired:
+                break
+            await asyncio.sleep(0.1)
+        await self.coordinator.async_request_refresh()
+
+    async def async_media_pause(self) -> None:
+        await self.coordinator.adb_manager.media_pause()
+        desired = "paused"
+        for _ in range(5):
+            st = await self.coordinator.adb_manager.get_playback_state()
+            self.coordinator.data.playback_state = st
+            self.async_write_ha_state()
+            if st == desired:
+                break
+            await asyncio.sleep(0.1)
+        await self.coordinator.async_request_refresh()
+
+    async def async_media_next_track(self) -> None:
+        await self.coordinator.adb_manager.media_next()
+        # Try to keep state in PLAYING after next
         st = await self.coordinator.adb_manager.get_playback_state()
         self.coordinator.data.playback_state = st
         self.async_write_ha_state()
         await self.coordinator.async_request_refresh()
 
-    async def async_media_pause(self) -> None:
-        await self.coordinator.adb_manager.media_pause()
+    async def async_media_previous_track(self) -> None:
+        await self.coordinator.adb_manager.media_previous()
         st = await self.coordinator.adb_manager.get_playback_state()
         self.coordinator.data.playback_state = st
         self.async_write_ha_state()

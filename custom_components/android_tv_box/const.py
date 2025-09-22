@@ -95,6 +95,8 @@ ANDROID_KEYCODES: Final = {
     "MEDIA_PLAY": 126,
     "MEDIA_PAUSE": 127,
     "MEDIA_PLAY_PAUSE": 85,
+    "MEDIA_NEXT": 87,
+    "MEDIA_PREVIOUS": 88,
 }
 
 # Device info attributes

@@ -557,11 +557,27 @@ class ADBManager:
             _LOGGER.debug("media_play_pause failed: %s", e)
             return False
 
+    async def media_next(self) -> bool:
+        try:
+            await self._execute_command("input keyevent 87")
+            return True
+        except Exception as e:
+            _LOGGER.debug("media_next failed: %s", e)
+            return False
+
+    async def media_previous(self) -> bool:
+        try:
+            await self._execute_command("input keyevent 88")
+            return True
+        except Exception as e:
+            _LOGGER.debug("media_previous failed: %s", e)
+            return False
+
     async def get_playback_state(self) -> str:
         """Return playback state: 'playing', 'paused', or 'idle'."""
         try:
             out, _ = await self._execute_command(
-                "dumpsys media_session | grep -m 1 -E 'state=PlaybackState|state='"
+                "dumpsys media_session | grep -m 1 -E 'state=PlaybackState|state=' || true"
             )
             # Numeric form: state=PlaybackState {state=3, ...}
             m = re.search(r"state=PlaybackState \{state=(\d+)", out or "")
@@ -580,6 +596,12 @@ class ADBManager:
                     return "playing"
                 if st in ("PAUSED", "STOPPED"): 
                     return "paused"
+            # Fallback: active sessions
+            out2, _ = await self._execute_command("dumpsys media_session | grep -m 1 -E 'PlaybackState|state=' || true")
+            if "PLAYING" in (out2 or ""):
+                return "playing"
+            if "PAUSED" in (out2 or ""):
+                return "paused"
             return "idle"
         except Exception as e:
             _LOGGER.debug("get_playback_state failed: %s", e)
